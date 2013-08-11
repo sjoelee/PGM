@@ -13,33 +13,40 @@ Input:
 Output:
   return the corresponding assignment indices 
 """
-def IndexToAssignment (I, D):
-    # Change I from a row vector to a column vector
-    I_tile = np.tile((I-1)[:,np.newaxis], (1, D.__len__()))
-    C_tile = np.tile(np.concatenate(([1], np.cumprod(D[:-1])), axis = 0),
-                     (I.__len__(), 1))
-    return np.mod(I_tile/C_tile, np.tile(D, (I.__len__(), 1))) + 1
+def IndexToAssignment (I, card):
+    # Make sure the elements are integers
+    # We'll typecast them. Warning: may lose information
+    I = I.astype(int)
+    card = card.astype(int)
+
+    # Make sure I is a column vector and card is a row vector
+    I = np.reshape(I, (-1,1))
+    card = np.reshape(card, (1,-1))
+
+    I_tile = np.tile(I, (1, card.shape[1]))
+    C_tile = np.tile(np.concatenate(([1], np.cumprod(card[0][:-1])), axis = 0),
+                     (I.shape[1], 1))
+
+    return np.mod(I_tile/C_tile, np.tile(card, (I.shape[1], 1))) + 1
 
 """
-AssignmentToIndex(A,D)
+AssignmentToIndex(A,card)
 
 Input: 
   Assignment A
-  D - a vector containing the cardinality of each variable
+  card - a vector containing the cardinality of each variable
 Output:
   return the corresponding index
 """
-def AssignmentToIndex (A, D):
-    cprod = np.concatenate(([1], D[:-1]), axis = 0)
-#    print A
-#    print D
-#    print cprod
+def AssignmentToIndex (A, card):
+    cprod = np.concatenate(([1], card[:-1]), axis = 0)
     cprod = np.cumprod(cprod)
-#    print cprod
-    return ((A - 1).dot(cprod.T)) + 1
+
+    return int((A - 1).dot(cprod.T))
 
 """
 FindIndices(A, varbs)
+This is a copy of someone's implementation of ismember in stackoverflow.com
 
 Input:
   Array A containing variables (all elements must be unique)
@@ -48,10 +55,17 @@ Output:
   return the vector of indices in the same order as varbs
 """
 def FindIndices (A, varbs):
-    mapIndices = np.array([])
-    for i, a in enumerate(A):
-        if varbs.__contains__(a):
-            mapIndices = np.append(mapIndices, i)
-    #Have to convert to integer so we can use this to map an array
-    mapIndices = np.asarray(mapIndices, dtype = int)
-    return mapIndices
+    tf = np.array([variable in A for variable in varbs])
+    u = np.unique(varbs[tf])
+    mapIndices = np.array([(np.where(A == variable))[0][-1] if t else 0 for variable, t in zip(varbs,tf)])
+
+    return tf, mapIndices
+
+#A = np.array([5,4,3,2,1])
+#B = np.array([1,3,5,9])
+#A = np.array([5,11])
+#B = np.array([3,4])
+#print IndexToAssignment(A,B)
+#tf, C = FindIndices(A,B)
+#print tf
+#print C
