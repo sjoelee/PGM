@@ -27,10 +27,10 @@ class TestPGMUtilityFunctions (unittest.TestCase):
         idx = util.AssignmentToIndex(np.array([2,2,2]), np.array([2,2,2]))
         np.testing.assert_equal(idx, 7)
 
-#    def test_AssignmentToIndex3 (self):
-#        # Test #3
-#        idx = util.AssignmentToIndex(np.array([[2,1],[2,3]]), np.array([3,4]))
-#        np.testing.assert_equal(idx, np.array([5,11]))
+    def test_AssignmentToIndex3 (self):
+        # Test #3
+        idx = util.AssignmentToIndex(np.array([[2,1],[2,3]]), np.array([3,4]))
+        np.testing.assert_equal(idx, np.array([1,7]))
 
     def test_IndexToAssignment1 (self):
         # Test #1
@@ -43,7 +43,7 @@ class TestPGMUtilityFunctions (unittest.TestCase):
         np.testing.assert_equal(assignment, np.array([[2,2,2]]))
 
     def test_IndexToAssignment3 (self):
-        # Test #2
+        # Test #3
         assignment = util.IndexToAssignment(np.array([5,11]), np.array([3,4]))
         np.testing.assert_equal(assignment, np.array([[3,2],[3,4]]))
 
@@ -51,27 +51,30 @@ class TestPGMUtilityFunctions (unittest.TestCase):
         # Test #1
         expectedFactor = pgmf.Factor(np.array([1]), np.array([2]), np.array([1,1]))
         self.factorB.marginalize(np.array([2]))
-#        np.testing.assert_equal(self.factorB, expectedFactor)
         np.testing.assert_array_equal(self.factorB.varbs, expectedFactor.varbs)
         np.testing.assert_array_equal(self.factorB.card, expectedFactor.card)
         np.testing.assert_array_equal(self.factorB.vals, expectedFactor.vals)
 
     def test_marginalize2 (self):
         # Test #2
-        expectedFactor = pgmf.Factor(np.array([3]), np.array([2]), np.array([0.45, 0.55]))
+        expectedFactor = pgmf.Factor(np.array([3]), np.array([2]), np.array([0.45, 1.55]))
         self.factorC.marginalize(np.array([2]))
-        np.testing.assert_equal(self.factorC, expectedFactor)
+        np.testing.assert_array_equal(self.factorC.varbs, expectedFactor.varbs)
+        np.testing.assert_array_equal(self.factorC.card, expectedFactor.card)
+        np.testing.assert_array_almost_equal(self.factorC.vals, expectedFactor.vals, decimal = 5)
+#        np.testing.assert_array_equal(self.factorC.vals, expectedFactor.vals)
 
         # Reset factorC
         self.factorC = pgmf.Factor(np.array([3,2]), np.array([2,2]), np.array([0.39, 0.61, 0.06, 0.94])) 
-#                                     
-#        # Test #3
-#        expectedFactor = pgmf.Factor(np.array([3]), np.array([2]), np.array([1,1]))
-#        self.factorC.marginalize(np.array([3]))
-#        np.testing.assert_equal(self.factorC, expectedFactor)
-#
-#        self.factorC = pgmf.Factor(np.array([3,2]), np.array([2,2]), np.array([0.39, 0.61, 0.06, 0.94])) 
-#
+        # Test #3
+        expectedFactor = pgmf.Factor(np.array([2]), np.array([2]), np.array([1,1]))
+        self.factorC.marginalize(np.array([3]))
+        np.testing.assert_array_equal(self.factorC.varbs, expectedFactor.varbs)
+        np.testing.assert_array_equal(self.factorC.card, expectedFactor.card)
+        np.testing.assert_array_almost_equal(self.factorC.vals, expectedFactor.vals, decimal = 5)
+
+        self.factorC = pgmf.Factor(np.array([3,2]), np.array([2,2]), np.array([0.39, 0.61, 0.06, 0.94])) 
+
     def test_FindIndices1 (self):
         # Test #1 - test to see if all variables are located correctly in the array
         A = np.array([5,4,3,2,1])
@@ -96,6 +99,13 @@ class TestPGMUtilityFunctions (unittest.TestCase):
         tf, C = util.FindIndices(A, B)
         np.testing.assert_array_equal(tf, [True,True,True,False])
         np.testing.assert_array_equal(C, [4,2,0,0])
+
+    def test_product1 (self):
+        expectedFactor = pgmf.Factor(np.array([1,2]), np.array([2,2]), np.array([0.0649, 0.1958, 0.0451, 0.6942]))
+        productFactor  = pgmf.product(self.factorA, self.factorB)
+        np.testing.assert_array_equal(productFactor.varbs, expectedFactor.varbs)
+        np.testing.assert_array_equal(productFactor.card, expectedFactor.card)
+        np.testing.assert_array_almost_equal(productFactor.vals, expectedFactor.vals, decimal = 5)
 
 def main():
 #    unittest.test_FindIndices();

@@ -41,8 +41,14 @@ Output:
 def AssignmentToIndex (A, card):
     cprod = np.concatenate(([1], card[:-1]), axis = 0)
     cprod = np.cumprod(cprod)
+#    if (A.shape[0] > 1):
+#        cprod = np.reshape(cprod, (1,-1)) 
+#    else:
+#        cprod = np.reshape(cprod, (-1, 1))
+#    A = np.reshape(A, (1, -1))
 
-    return int((A - 1).dot(cprod.T))
+    # Reduce to a 1-D array instead of a 2-D vector
+    return ((A - 1).dot(cprod.reshape((-1,1)))).reshape(-1)
 
 """
 FindIndices(A, varbs)
@@ -61,11 +67,3 @@ def FindIndices (A, varbs):
 
     return tf, mapIndices
 
-#A = np.array([5,4,3,2,1])
-#B = np.array([1,3,5,9])
-#A = np.array([5,11])
-#B = np.array([3,4])
-#print IndexToAssignment(A,B)
-#tf, C = FindIndices(A,B)
-#print tf
-#print C
