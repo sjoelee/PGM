@@ -41,11 +41,6 @@ Output:
 def AssignmentToIndex (A, card):
     cprod = np.concatenate(([1], card[:-1]), axis = 0)
     cprod = np.cumprod(cprod)
-#    if (A.shape[0] > 1):
-#        cprod = np.reshape(cprod, (1,-1)) 
-#    else:
-#        cprod = np.reshape(cprod, (-1, 1))
-#    A = np.reshape(A, (1, -1))
 
     # Reduce to a 1-D array instead of a 2-D vector
     return ((A - 1).dot(cprod.reshape((-1,1)))).reshape(-1)

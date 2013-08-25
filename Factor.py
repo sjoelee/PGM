@@ -10,7 +10,7 @@ class Factor:
 
     def marginalize (self, variables):
         """Update the factor by marginalizing out the variables"""
-        # Find the ones that are not in varaibles but in self.varbs
+        # Find the ones that are not in variables but in self.varbs
         varbs = np.setdiff1d(self.varbs, variables)
         tf, mapIndices = FindIndices(self.varbs, varbs)
         card = self.card[mapIndices]
@@ -29,6 +29,31 @@ class Factor:
         self.varbs = varbs
         self.card = card
         self.vals = vals
+
+    def observeEvidence (self, evidence):
+        """ Modify a set of factors given some evidence.
+        
+        "evidence" is an N-by-2 matrix, where each row consists of a var/value pair. 
+        variables are in the first column, values are in the second.
+        """
+        if evidence.shape == (2,):
+            var, val = evidence
+            tf, var_index = FindIndices(self.varbs, np.array([var]))
+            if (tf == True):
+                assignments = IndexToAssignment(np.arange(np.prod(self.card)), self.card)
+                for a in assignments:
+                    if (a[var_index] != val):
+                        self.vals[AssignmentToIndex(a, self.card)] = 0
+        else:
+            for var, val in evidence:
+                # Find where var is in factor.varbs
+                # Make sure val valid (less than the card of the var)
+                tf, var_index = FindIndices(self.varbs, np.array([var]))
+                if (tf == True):
+                    assignments = IndexToAssignment(np.arange(np.prod(self.card)), self.card)
+                    for a in assignments:
+                        if (a[var_index] != val):
+                            self.vals[AssignmentToIndex(a, self.card)] = 0
 
     def printFactor (self):
         print "variables:   ", self.varbs
@@ -61,21 +86,31 @@ def product (f1, f2):
     prod = Factor(varbs, card, vals)
     return prod
 
-def observeEvidence (factors, evidence):
-    """ 
-    Modify a set of factors given some evidence.
+def joint (factors):
+    """ Given a list of factors, compute their joint distribution
+    factors - a N x 1 array of factors, where N is the number of distinct factors
     
-    "factors" is a vector of factors where each factor has the following data structure:
-      varbs - a vector of variables
-      card - the cardinalities corresponding to varbs
-      vals - value table
-
-    "evidence" is an N-by-2 matrix, where each row consists of a var/value pair. 
-    variables are in the first column, values are in the second.
+    return a Factor object that characterizes this distribution
     """
-    for var, val in evidence:
-        # Find where var is in factor.varbs
-        # Make sure val valid (less than the card of the var)
+    jointFactor = factors[0]
+    for factor in factors[1:]:
+        jointFactor = product(jointFactor, factor)
+
+    return jointFactor
+
+def computeMarginal (varbs, factors, evidence):
+    """Create a factor that has a distribution taken from the factors input and 
+    takes the evidence into account.
+    """
+    resultFactor = joint(factors)
+    resultFactor.observeEvidence(evidence)
+    resultFactor.marginalize(np.setdiff1d(resultFactor.varbs, varbs))
+
+    # Normalize values
+    norm_sum = np.sum(resultFactor.vals)
+    resultFactor.vals = resultFactor.vals/norm_sum
+
+    return resultFactor    
 
 def copy_factor (factor):
     factor_copy = Factor(factor.varbs, factor.card, factor.vals)
